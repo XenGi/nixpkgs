@@ -7059,10 +7059,7 @@ with pkgs;
 
     m17n = callPackage ../tools/inputmethods/ibus-engines/ibus-m17n { };
 
-    mozc = callPackage ../tools/inputmethods/ibus-engines/ibus-mozc {
-      stdenv = clangStdenv;
-      protobuf = pkgs.protobuf_21.overrideDerivation (_: { stdenv = clangStdenv; });
-    };
+    mozc = callPackage ../tools/inputmethods/ibus-engines/ibus-mozc { };
 
     openbangla-keyboard = libsForQt5.callPackage ../applications/misc/openbangla-keyboard { withIbusSupport = true; };
 
@@ -30806,7 +30803,7 @@ with pkgs;
 
   clapper = callPackage ../applications/video/clapper { };
 
-  claws-mail = disable-warnings-if-gcc13 (callPackage ../applications/networking/mailreaders/claws-mail { });
+  claws-mail = callPackage ../applications/networking/mailreaders/claws-mail { };
 
   cligh = python3Packages.callPackage ../development/tools/github/cligh { };
 
