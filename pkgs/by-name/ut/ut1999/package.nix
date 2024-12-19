@@ -7,11 +7,11 @@
   fetchurl,
   makeDesktopItem,
   copyDesktopItems,
+  libarchive,
   imagemagick,
   runCommand,
   libgcc,
   wxGTK32,
-  #innoextract,
   libGL,
   SDL2,
   openal,
@@ -44,7 +44,7 @@ let
       {
         src = fetchurl {
           url = "https://archive.org/download/ut-goty/UT_GOTY_CD1.iso";
-          hash = "";
+          hash = "sha256-4YSYTKiPABxd3VIDXXbNZOJm4mx0l1Fhte1yNmx0cE8=";
         };
         nativeBuildInputs = [ libarchive ];
       }
@@ -53,40 +53,21 @@ let
         mkdir $out
         cp -r Music Sounds Textures Maps $out
       '';
+  # TODO: find stable icon source
   getIcon =
     runCommand "ut1999-ico"
       {
         src = fetchurl {
           url = "https://cdn2.steamgriddb.com/icon/3edadc22520518c0d5d4580cf9af3a8c.ico";
-          hash = "";
+          hash = "sha256-Dcs1jJbv2mmC2qokJbN0Umjpxa9w0wX9Eb45xZ2v08A=";
         };
-        nativeBuildInputs = [];
+        nativeBuildInputs = [ imagemagick ];
       }
       ''
-        cp $src $out/ut1999.ico
+        convert $src ut1999.png
+        mkdir $out
+        cp ut1999-*.png $out
       '';
-  #unpackGog =
-  #  runCommand "ut1999-gog"
-  #    {
-  #      src = requireFile rec {
-  #        name = "setup_ut_goty_2.0.0.5.exe";
-  #        hash = "sha256-TMJX1U2XZZxQYvK/GG0KjGlZVh0R5C2Pzy6sB/GSaAM=";
-  #        message = ''
-  #          Unreal Tournament 1999 requires the official GOG package, version 2.0.0.5.
-  #
-  #          Once you download the file, run the following command:
-  #
-  #          nix-prefetch-url file://\$PWD/${name}
-  #        '';
-  #      };
-  #
-  #      nativeBuildInputs = [ innoextract ];
-  #    }
-  #    ''
-  #      innoextract --extract --exclude-temp "$src"
-  #      mkdir $out
-  #      cp -r app/* $out
-  #    '';
   systemDir =
     {
       x86_64-linux = "System64";
@@ -118,7 +99,6 @@ stdenv.mkDerivation {
     lib.optionals stdenv.hostPlatform.isLinux [
       copyDesktopItems
       autoPatchelfHook
-      imagemagick
     ]
     ++ lib.optionals stdenv.hostPlatform.isDarwin [
       undmg
@@ -150,9 +130,14 @@ stdenv.mkDerivation {
       ln -s "$out/${systemDir}/ut-bin" "$out/bin/ut1999"
       ln -s "$out/${systemDir}/ucc-bin" "$out/bin/ut1999-ucc"
 
-      # TODO: find stable icon source
-      convert "${getIcon}/ut1999.ico" "ut1999.png"
-      install -D ut1999-5.png "$out/share/icons/hicolor/256x256/apps/ut1999.png"
+      install -D "${getIcon}/ut1999-0.png" "$out/share/icons/hicolor/16x16/apps/ut1999.png"
+      install -D "${getIcon}/ut1999-1.png" "$out/share/icons/hicolor/24x24/apps/ut1999.png"
+      install -D "${getIcon}/ut1999-2.png" "$out/share/icons/hicolor/32x32/apps/ut1999.png"
+      install -D "${getIcon}/ut1999-3.png" "$out/share/icons/hicolor/48x48/apps/ut1999.png"
+      install -D "${getIcon}/ut1999-4.png" "$out/share/icons/hicolor/64x64/apps/ut1999.png"
+      install -D "${getIcon}/ut1999-5.png" "$out/share/icons/hicolor/128x128/apps/ut1999.png"
+      install -D "${getIcon}/ut1999-6.png" "$out/share/icons/hicolor/192x192/apps/ut1999.png"
+      install -D "${getIcon}/ut1999-7.png" "$out/share/icons/hicolor/256x256/apps/ut1999.png"
 
       # Remove bundled libraries to use native versions instead
       rm $out/${systemDir}/libmpg123.so* \
