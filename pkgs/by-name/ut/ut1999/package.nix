@@ -11,7 +11,7 @@
   runCommand,
   libgcc,
   wxGTK32,
-  innoextract,
+  #innoextract,
   libGL,
   SDL2,
   openal,
@@ -39,28 +39,54 @@ let
       hash = "sha256-TbhJbOH4E5WOb6XR9dmqLkXziK3/CzhNjd1ypBkkmvw=";
     };
   };
-  unpackGog =
-    runCommand "ut1999-gog"
+  unpackIso =
+    runCommand "ut1999-iso"
       {
-        src = requireFile rec {
-          name = "setup_ut_goty_2.0.0.5.exe";
-          hash = "sha256-TMJX1U2XZZxQYvK/GG0KjGlZVh0R5C2Pzy6sB/GSaAM=";
-          message = ''
-            Unreal Tournament 1999 requires the official GOG package, version 2.0.0.5.
-
-            Once you download the file, run the following command:
-
-            nix-prefetch-url file://\$PWD/${name}
-          '';
+        src = fetchurl {
+          url = "https://archive.org/download/ut-goty/UT_GOTY_CD1.iso";
+          hash = "";
         };
-
-        nativeBuildInputs = [ innoextract ];
+        nativeBuildInputs = [ libarchive ];
       }
       ''
-        innoextract --extract --exclude-temp "$src"
+        bsdtar -xvf "$src"
         mkdir $out
-        cp -r app/* $out
+        cp -r Music Sounds Textures Maps $out
       '';
+  getIcon =
+    runCommand "ut1999-ico"
+      {
+        src = fetchurl {
+          url = "https://cdn2.steamgriddb.com/icon/3edadc22520518c0d5d4580cf9af3a8c.ico";
+          hash = "";
+        };
+        nativeBuildInputs = [];
+      }
+      ''
+        cp $src $out/ut1999.ico
+      '';
+  #unpackGog =
+  #  runCommand "ut1999-gog"
+  #    {
+  #      src = requireFile rec {
+  #        name = "setup_ut_goty_2.0.0.5.exe";
+  #        hash = "sha256-TMJX1U2XZZxQYvK/GG0KjGlZVh0R5C2Pzy6sB/GSaAM=";
+  #        message = ''
+  #          Unreal Tournament 1999 requires the official GOG package, version 2.0.0.5.
+  #
+  #          Once you download the file, run the following command:
+  #
+  #          nix-prefetch-url file://\$PWD/${name}
+  #        '';
+  #      };
+  #
+  #      nativeBuildInputs = [ innoextract ];
+  #    }
+  #    ''
+  #      innoextract --extract --exclude-temp "$src"
+  #      mkdir $out
+  #      cp -r app/* $out
+  #    '';
   systemDir =
     {
       x86_64-linux = "System64";
@@ -111,17 +137,21 @@ stdenv.mkDerivation {
       chmod -R 755 $out
       cd ${outPrefix}
 
+      # NOTE: OldUnreal patch doesn't include these folders but could in the future
       rm -rf ./{Music,Sounds,Maps}
-      ln -s ${unpackGog}/{Music,Sounds,Maps} .
+      ln -s ${unpackIso}/{Music,Sounds,Maps} .
 
-      cp -n ${unpackGog}/Textures/* ./Textures || true
-      cp -n ${unpackGog}/System/*.{u,int} ./System || true
+      # TODO: unpack compressed maps with ucc
+
+      cp -n ${unpackIso}/Textures/* ./Textures || true
+      cp -n ${unpackIso}/System/*.{u,int} ./System || true
     ''
     + lib.optionalString (stdenv.hostPlatform.isLinux) ''
       ln -s "$out/${systemDir}/ut-bin" "$out/bin/ut1999"
       ln -s "$out/${systemDir}/ucc-bin" "$out/bin/ut1999-ucc"
 
-      convert "${unpackGog}/gfw_high.ico" "ut1999.png"
+      # TODO: find stable icon source
+      convert "${getIcon}/ut1999.ico" "ut1999.png"
       install -D ut1999-5.png "$out/share/icons/hicolor/256x256/apps/ut1999.png"
 
       # Remove bundled libraries to use native versions instead
@@ -129,6 +159,8 @@ stdenv.mkDerivation {
         $out/${systemDir}/libopenal.so* \
         $out/${systemDir}/libSDL2* \
         $out/${systemDir}/libxmp.so*
+        # NOTE: what about fmod?
+        #$out/${systemDir}/libfmod.so*
     ''
     + ''
       runHook postInstall
@@ -160,3 +192,4 @@ stdenv.mkDerivation {
     mainProgram = "ut1999";
   };
 }
+
